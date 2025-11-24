@@ -1,0 +1,56 @@
+The error is expected - there's no service running on port 80 on your machine. Your proxy is working correctly, it's just trying to connect to an upstream server that doesn't exist yet!
+
+Here are a few ways to test your proxy:
+
+## Option 1: Use a Simple HTTP Server
+
+Start a simple Python HTTP server in another terminal:
+
+```bash
+# Terminal 1 - Start a simple HTTP server on port 8000
+python3 -m http.server 8000
+```
+
+Then run your proxy to forward to it:
+```bash
+# Terminal 2 - Run your proxy
+cargo run -- 0.0.0.0:8080 127.0.0.1:8000
+```
+
+Now you can test:
+```bash
+# Terminal 3 - Test the proxy
+curl http://localhost:8080
+```
+
+## Option 2: Proxy to a Public Server
+
+Test by proxying to an external server:
+
+```bash
+cargo run -- 0.0.0.0:8080 example.com:80
+```
+
+Then test with:
+```bash
+curl http://localhost:8080
+```
+
+## Option 3: Use Netcat as Echo Server
+
+```bash
+# Terminal 1 - Simple echo server
+nc -l 9000
+
+# Terminal 2 - Run proxy
+cargo run -- 0.0.0.0:8080 127.0.0.1:9000
+
+# Terminal 3 - Test
+telnet localhost 8080
+```
+
+## Quick Test with Real Service
+
+If you have nginx or apache installed, start it first. Otherwise, the Python HTTP server (Option 1) is the easiest way to test your proxy quickly!
+
+Your proxy code looks solid - it's using zero-copy transfers, SO_REUSEPORT, and CPU pinning. Once you have an upstream service running, you should see nice performance stats! 🚀
