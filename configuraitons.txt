@@ -1,0 +1,26 @@
+#!/bin/bash
+# Optimize for 2TB+ traffic handling
+
+# Increase connection limits
+sudo sysctl -w net.core.somaxconn=65535
+sudo sysctl -w net.ipv4.tcp_max_syn_backlog=65535
+sudo sysctl -w net.core.netdev_max_backlog=250000
+
+# Fast connection recycling
+sudo sysctl -w net.ipv4.tcp_fin_timeout=10
+sudo sysctl -w net.ipv4.tcp_tw_reuse=1
+sudo sysctl -w net.ipv4.tcp_max_tw_buckets=2000000
+
+# Optimal buffer sizes (not too large!)
+sudo sysctl -w net.core.rmem_max=16777216
+sudo sysctl -w net.core.wmem_max=16777216
+sudo sysctl -w net.ipv4.tcp_rmem='4096 16384 16777216'
+sudo sysctl -w net.ipv4.tcp_wmem='4096 16384 16777216'
+
+# Performance tuning
+sudo sysctl -w net.ipv4.tcp_congestion_control=bbr
+sudo sysctl -w net.ipv4.tcp_mtu_probing=1
+sudo sysctl -w net.ipv4.tcp_slow_start_after_idle=0
+
+# File descriptors
+ulimit -n 1048576

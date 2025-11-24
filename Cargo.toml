@@ -1,0 +1,17 @@
+[package]
+name = "arctic-proxy"
+version = "1.0.0"
+edition = "2021"
+
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+futures = "0.3"
+libc = "0.2"
+socket2 = "0.6.1"
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+strip = true
