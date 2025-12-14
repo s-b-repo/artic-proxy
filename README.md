@@ -1,21 +1,21 @@
-# 🚀 Arctic Proxy
+#  Arctic Proxy
 
 A blazingly fast, high-performance TCP proxy written in Rust with advanced kernel optimizations and zero-copy networking.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Rust](https://img.shields.io/badge/rust-1.70%2B-orange.svg)](https://www.rust-lang.org/)
 
-## ✨ Features
+##  Features
 
-- **🔥 Extreme Performance**: Multi-threaded architecture with CPU pinning and SO_REUSEPORT for kernel-level load balancing
-- **⚡ Zero-Copy I/O**: Utilizes Tokio's bidirectional copy for efficient data transfer
-- **🎯 Smart Load Balancing**: Kernel-managed connection distribution across CPU cores
-- **📊 Real-time Stats**: Live monitoring of throughput, connections, errors, and rejected requests
-- **🛡️ Graceful Shutdown**: Proper connection draining with configurable timeout
-- **🔧 Highly Configurable**: Fine-tune buffer sizes, connection limits, timeouts, and more
-- **💪 Production Ready**: Battle-tested TCP optimizations (TCP_NODELAY, TCP_QUICKACK, TCP_FASTOPEN)
+- ** Extreme Performance**: Multi-threaded architecture with CPU pinning and SO_REUSEPORT for kernel-level load balancing
+- ** Zero-Copy I/O**: Utilizes Tokio's bidirectional copy for efficient data transfer
+- ** Smart Load Balancing**: Kernel-managed connection distribution across CPU cores
+- ** Real-time Stats**: Live monitoring of throughput, connections, errors, and rejected requests
+- ** Graceful Shutdown**: Proper connection draining with configurable timeout
+- ** Highly Configurable**: Fine-tune buffer sizes, connection limits, timeouts, and more
+- ** Production Ready**: Battle-tested TCP optimizations (TCP_NODELAY, TCP_QUICKACK, TCP_FASTOPEN)
 
-## 🏗️ Architecture
+##  Architecture
 
 Arctic Proxy spawns one worker per CPU core, each bound to a specific CPU for optimal cache locality. The kernel distributes incoming connections across workers using SO_REUSEPORT, ensuring efficient load balancing without userspace coordination overhead.
 
@@ -26,7 +26,7 @@ Client → [Worker 0 (CPU 0)] → Upstream
       → [Worker N (CPU N)] → Upstream
 ```
 
-## 📦 Installation
+##  Installation
 
 ### Prerequisites
 
@@ -44,7 +44,7 @@ cargo build --release
 
 The compiled binary will be available at `target/release/arctic-proxy`.
 
-## 🚀 Quick Start
+##  Quick Start
 
 ### Basic Usage
 
@@ -67,7 +67,7 @@ arctic-proxy <listen_addr> <upstream_addr> [max_connections] [timeout_secs] [buf
 arctic-proxy 0.0.0.0:8080 127.0.0.1:80 100000 5 65536 4096 10 5 3
 ```
 
-## ⚙️ Configuration Parameters
+##  Configuration Parameters
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
@@ -81,12 +81,12 @@ arctic-proxy 0.0.0.0:8080 127.0.0.1:80 100000 5 65536 4096 10 5 3
 | `shutdown_drain_secs` | `5` | Grace period for connection draining |
 | `upstream_test_timeout_secs` | `3` | Upstream connectivity test timeout |
 
-## 📊 Real-time Monitoring
+##  Real-time Monitoring
 
 Arctic Proxy provides live statistics every second:
 
 ```
-⚡    234 active |      12 err |       5 rej |    2.45 Gbps |     15.67 GB total
+   234 active |      12 err |       5 rej |    2.45 Gbps |     15.67 GB total
 ```
 
 - **active**: Current active connections
@@ -95,7 +95,7 @@ Arctic Proxy provides live statistics every second:
 - **Gbps**: Current throughput in gigabits per second
 - **GB total**: Total data transferred
 
-## 🔧 Performance Tuning
+##  Performance Tuning
 
 ### System-level Optimizations
 
@@ -128,7 +128,7 @@ Adjust these parameters based on your workload:
 - **Many connections**: Increase `max_connections` and `backlog`
 - **Resource constrained**: Reduce `num_workers` by limiting available CPUs
 
-## 🛠️ Technical Details
+##  Technical Details
 
 ### Socket Optimizations
 
@@ -153,7 +153,7 @@ Adjust these parameters based on your workload:
 - Lock-free atomic operations for connection counting
 - Compare-and-swap for connection limit enforcement
 
-## 🔒 Graceful Shutdown
+##  Graceful Shutdown
 
 Arctic Proxy handles `SIGINT` (Ctrl+C) gracefully:
 
@@ -164,13 +164,13 @@ Arctic Proxy handles `SIGINT` (Ctrl+C) gracefully:
 
 ```
 ^C
-🛑 Shutting down gracefully...
+ Shutting down gracefully...
 ......
-⚠️ Shutdown timeout reached, 12 connections remaining
-✅ Shutdown complete
+ Shutdown timeout reached, 12 connections remaining
+ Shutdown complete
 ```
 
-## 🐛 Troubleshooting
+##  Troubleshooting
 
 ### "Cannot connect to upstream"
 
@@ -196,7 +196,7 @@ sudo ./arctic-proxy 0.0.0.0:80 127.0.0.1:8080
 - Increase timeout values
 - Review system resource limits (file descriptors, memory)
 
-## 📈 Benchmarking
+##  Benchmarking
 
 Test Arctic Proxy with common load testing tools:
 
@@ -211,7 +211,7 @@ ab -n 100000 -c 1000 http://localhost:8080/
 hey -n 100000 -c 1000 http://localhost:8080/
 ```
 
-## 🤝 Contributing
+##  Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
@@ -221,17 +221,17 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## 📝 License
+##  License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🙏 Acknowledgments
+##  Acknowledgments
 
 - Built with [Tokio](https://tokio.rs/) async runtime
 - Socket operations powered by [socket2](https://github.com/rust-lang/socket2)
 - Inspired by high-performance proxy designs from HAProxy and NGINX
 
-## 📧 Contact
+##  Contact
 
 - **Issues**: [GitHub Issues](https://github.com/s-b-repo/arctic-proxy/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/s-b-repo/arctic-proxy/discussions)
