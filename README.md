@@ -1,19 +1,20 @@
 #  Arctic Proxy
 
-A blazingly fast, high-performance TCP proxy written in Rust with advanced kernel optimizations and zero-copy networking.
+A blazingly fast, high-performance TCP proxy written in Rust with advanced kernel optimizations and an efficient, buffer-tuned relay path.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Rust](https://img.shields.io/badge/rust-1.70%2B-orange.svg)](https://www.rust-lang.org/)
 
 ##  Features
 
-- ** Extreme Performance**: Multi-threaded architecture with CPU pinning and SO_REUSEPORT for kernel-level load balancing
-- ** Zero-Copy I/O**: Utilizes Tokio's bidirectional copy for efficient data transfer
-- ** Smart Load Balancing**: Kernel-managed connection distribution across CPU cores
-- ** Real-time Stats**: Live monitoring of throughput, connections, errors, and rejected requests
-- ** Graceful Shutdown**: Proper connection draining with configurable timeout
+- ** Extreme Performance**: Multi-threaded architecture with affinity-correct CPU pinning and SO_REUSEPORT for kernel-level connection distribution
+- ** Efficient Relay I/O**: Bidirectional copy with a configurable (64 KiB–1 MiB) userspace buffer that minimizes read/write syscalls per byte moved
+- ** Kernel Load Distribution**: SO_REUSEPORT + SO_INCOMING_CPU spread inbound connections across CPU-pinned workers (note: forwards to a single upstream — this is connection distribution, not backend load balancing)
+- ** Real-time Stats**: Live, per-byte throughput accounting (correct even for long-lived flows and on error)
+- ** DoS-resistant**: Optional idle / lifetime timeouts plus aggressive keepalive + TCP_USER_TIMEOUT reap stuck and slow-loris connections
+- ** Graceful Shutdown**: Panic-safe connection accounting with proper draining and a configurable timeout
 - ** Highly Configurable**: Fine-tune buffer sizes, connection limits, timeouts, and more
-- ** Production Ready**: Battle-tested TCP optimizations (TCP_NODELAY, TCP_QUICKACK, TCP_FASTOPEN)
+- ** Production Ready**: Battle-tested TCP optimizations (TCP_NODELAY, TCP_QUICKACK, TCP_FASTOPEN, TCP_DEFER_ACCEPT)
 
 ##  Architecture
 
@@ -59,12 +60,12 @@ cargo run --release -- 0.0.0.0:8080 127.0.0.1:80
 ### Advanced Configuration
 
 ```
-arctic-proxy <listen_addr> <upstream_addr> [max_connections] [timeout_secs] [buffer_size] [backlog] [reject_sleep_ms] [shutdown_drain_secs] [upstream_test_timeout_secs]
+arctic-proxy <listen_addr> <upstream_addr> [max_connections] [timeout_secs] [buffer_size] [backlog] [reject_sleep_ms] [shutdown_drain_secs] [upstream_test_timeout_secs] [idle_timeout_secs] [max_lifetime_secs]
 ```
 
 **Example:**
 ```
-arctic-proxy 0.0.0.0:8080 127.0.0.1:80 100000 5 65536 4096 10 5 3
+arctic-proxy 0.0.0.0:8080 127.0.0.1:80 100000 5 65536 4096 0 5 3 300 0
 ```
 
 ##  Configuration Parameters
@@ -77,9 +78,13 @@ arctic-proxy 0.0.0.0:8080 127.0.0.1:80 100000 5 65536 4096 10 5 3
 | `timeout_secs` | `5` | Connection timeout in seconds |
 | `buffer_size` | `65536` | Socket buffer size in bytes |
 | `backlog` | `4096` | TCP listen backlog |
-| `reject_sleep_ms` | `10` | Sleep duration when rejecting connections |
+| `reject_sleep_ms` | `0` | **Deprecated, ignored** (it stalled the accept loop under overload) |
 | `shutdown_drain_secs` | `5` | Grace period for connection draining |
 | `upstream_test_timeout_secs` | `3` | Upstream connectivity test timeout |
+| `idle_timeout_secs` | `0` | Close a relay that moves no bytes for this long (`0` = disabled). Set on untrusted/edge deployments to reap slow-loris connections |
+| `max_lifetime_secs` | `0` | Hard cap on any single connection's lifetime (`0` = disabled) |
+
+> Worker count defaults to the number of CPUs the process is **allowed** to run on (from the scheduler affinity mask, so it is correct under cgroups/cpusets). Override with the `ARCTIC_WORKERS` env var.
 
 ##  Real-time Monitoring
 
@@ -137,13 +142,14 @@ Adjust these parameters based on your workload:
 - **TCP_QUICKACK**: Send ACKs immediately (Linux)
 - **TCP_FASTOPEN**: Reduce connection setup latency
 - **TCP_DEFER_ACCEPT**: Only accept connections with data ready
-- **SO_KEEPALIVE**: Detect dead connections
-- **SO_LINGER(0)**: Instant socket closure
+- **SO_KEEPALIVE / TCP_USER_TIMEOUT**: Aggressive keepalive (≈30s) reaps dead/half-open peers instead of waiting out the 2-hour kernel default
+
+> Note: Arctic deliberately does **not** set `SO_LINGER(0)` on relayed sockets — an abortive RST close can truncate in-flight data. It uses a graceful FIN close and relies on `tcp_tw_reuse` to manage TIME_WAIT.
 
 ### Memory Efficiency
 
-- Cache-aligned atomic counters to prevent false sharing
-- Zero-copy bidirectional data transfer with `copy_bidirectional`
+- Per-field cache-line-padded atomic counters to prevent false sharing
+- Buffer-sized bidirectional transfer via `copy_bidirectional_with_sizes`
 - Efficient buffer reuse through Tokio's runtime
 
 ### Concurrency Model

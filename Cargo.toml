@@ -13,5 +13,7 @@ socket2 = "0.6.1"
 opt-level = 3
 lto = "fat"
 codegen-units = 1
-panic = "abort"
+# Keep unwinding (the default) so a panic in one connection handler is isolated
+# to that task instead of aborting the whole proxy. Stability over a marginally
+# smaller binary.
 strip = true
